@@ -1,6 +1,6 @@
 package dev.tactiletech.titaniumdriver.database.utils;
 
-public class EncryptorUtils {
+public class WebUtils {
     public static String getBytes(String input) {
         StringBuilder binary = new StringBuilder();
         for (char c : input.toCharArray()) {

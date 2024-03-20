@@ -13,6 +13,6 @@ public interface Collection {
     void delete();
     String getName();
     void replaceDocument(String key, JSONObject document);
-    JSONObject searchDocument(String key, Object object);
+    JSONObject searchDocument(String key, Object value);
     JSONObject searchDocument(String key);
 }

@@ -1,4 +1,4 @@
-package dev.tactiletech.titaniumdriver.utils;
+package dev.tactiletech.titaniumdriver.web;
 
 import lombok.SneakyThrows;
 import org.apache.http.NameValuePair;
@@ -17,6 +17,7 @@ import java.util.List;
 
 @SuppressWarnings("all") // I'm not going to bother with the warnings.
 public class HTTPPostUtils {
+
     @SneakyThrows
     public static InputStream sendPostRequest(String url, HashMap<String, String> contents) {
         HttpClient client = new DefaultHttpClient();
@@ -45,4 +46,5 @@ public class HTTPPostUtils {
 
         return httpClient.execute(entity).getEntity().getContent();
     }
+
 }

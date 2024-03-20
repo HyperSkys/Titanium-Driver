@@ -1,5 +1,7 @@
 package dev.tactiletech.titaniumdriver;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import dev.tactiletech.titaniumdriver.database.Collection;
 import dev.tactiletech.titaniumdriver.database.Database;
 import dev.tactiletech.titaniumdriver.database.exceptions.ConnectionFailedException;
@@ -9,8 +11,8 @@ import dev.tactiletech.titaniumdriver.database.exceptions.collection.FailedToGet
 import dev.tactiletech.titaniumdriver.database.exceptions.collection.FailedToGetCollectionException;
 import dev.tactiletech.titaniumdriver.database.exceptions.database.*;
 import dev.tactiletech.titaniumdriver.database.exceptions.document.*;
-import dev.tactiletech.titaniumdriver.database.utils.EncryptorUtils;
-import dev.tactiletech.titaniumdriver.utils.HTTPPostUtils;
+import dev.tactiletech.titaniumdriver.database.utils.WebUtils;
+import dev.tactiletech.titaniumdriver.web.HTTPPostUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -52,6 +54,10 @@ public class TitaniumDB {
         return "tdb://" + username + ":" + password + "@" + host + ":" + port;
     }
 
+    public JsonObject convertJSONtoGson(JSONObject jsonObject) {
+        return new JsonParser().parse(jsonObject.toString()).getAsJsonObject();
+    }
+
     private void connect() {
         try {
             URL url = new URL("http://" + host + ":" + port + "/storage/auth");
@@ -59,8 +65,8 @@ public class TitaniumDB {
             map.put("username", username);
             map.put("password", password);
 
-            JSONTokener tokener = new JSONTokener(HTTPPostUtils.sendGetWithBody(url.toString(), map));
-            JSONObject object = new JSONObject(tokener);
+            JSONTokener jsonTokener = new JSONTokener(HTTPPostUtils.sendGetWithBody(url.toString(), map));
+            JSONObject object = new JSONObject(jsonTokener);
             if (!object.getJSONObject("data").getBoolean("success")) throw new ConnectionFailedException(object.getJSONObject("data").getString("reason"));
         } catch (Exception exception) {
             throw new ConnectionFailedException(exception.getMessage());
@@ -75,11 +81,27 @@ public class TitaniumDB {
             map.put("password", password);
             map.put("databaseName", dbName);
 
-            JSONTokener tokener = new JSONTokener(HTTPPostUtils.sendGetWithBody(url.toString(), map));
-            JSONObject object = new JSONObject(tokener);
+            JSONTokener jsonTokener = new JSONTokener(HTTPPostUtils.sendGetWithBody(url.toString(), map));
+            JSONObject object = new JSONObject(jsonTokener);
             return object.getJSONObject("data").getBoolean("exists");
         } catch (Exception exception) {
             throw new FailedToGetDatabaseException(exception.getMessage());
+        }
+    }
+
+    public void deleteDatabase(String dbName) {
+        try {
+            URL url = new URL("http://" + host + ":" + port + "/storage/deleteDatabase");
+            HashMap<String, String> map = new HashMap<>();
+            map.put("username", username);
+            map.put("password", password);
+            map.put("databaseName", dbName);
+
+            JSONTokener jsonTokener = new JSONTokener(HTTPPostUtils.sendPostRequest(url.toString(), map));
+            JSONObject object = new JSONObject(jsonTokener);
+            if (!object.getJSONObject("data").getBoolean("success")) throw new FailedToDeleteDatabaseException(object.getJSONObject("data").getString("reason"));
+        } catch (Exception exception) {
+            throw new FailedToDeleteDatabaseException(exception.getMessage());
         }
     }
 
@@ -115,8 +137,8 @@ public class TitaniumDB {
                     map.put("password", password);
                     map.put("databaseName", dbName);
 
-                    JSONTokener tokener = new JSONTokener(HTTPPostUtils.sendGetWithBody(url.toString(), map));
-                    JSONObject object = new JSONObject(tokener);
+                    JSONTokener jsonTokener = new JSONTokener(HTTPPostUtils.sendGetWithBody(url.toString(), map));
+                    JSONObject object = new JSONObject(jsonTokener);
                     if(!object.getJSONObject("data").getBoolean("success")) throw new FailedToGetAllCollectionsException(object.getJSONObject("data").getString("reason"));
                     JSONArray collections = object.getJSONObject("data").getJSONArray("data");
                     ArrayList<Collection> collectionList = new ArrayList<>();
@@ -139,8 +161,8 @@ public class TitaniumDB {
                     map.put("databaseName", dbName);
                     map.put("collectionName", name);
 
-                    JSONTokener tokener = new JSONTokener(HTTPPostUtils.sendGetWithBody(url.toString(), map));
-                    JSONObject object = new JSONObject(tokener);
+                    JSONTokener jsonTokener = new JSONTokener(HTTPPostUtils.sendGetWithBody(url.toString(), map));
+                    JSONObject object = new JSONObject(jsonTokener);
                     if (!object.getJSONObject("data").getBoolean("success")) throw new FailedToGetCollectionException(object.getJSONObject("data").getString("reason"));
 
                     return new Collection() {
@@ -194,7 +216,7 @@ public class TitaniumDB {
                                 contents.put("databaseName", dbName);
                                 contents.put("collectionName", name);
                                 contents.put("documentName", key);
-                                contents.put("data", EncryptorUtils.getBytes(document.toString()));
+                                contents.put("data", WebUtils.getBytes(document.toString()));
                                 JSONTokener jsonTokener = new JSONTokener(HTTPPostUtils.sendPostRequest(url.toString(), contents));
                                 JSONObject jsonObject = new JSONObject(jsonTokener);
                                 if (!jsonObject.getJSONObject("data").getBoolean("success")) throw new FailedToCreateDocumentException(jsonObject.getJSONObject("data").getString("reason"));
@@ -231,7 +253,7 @@ public class TitaniumDB {
                                 contents.put("databaseName", dbName);
                                 contents.put("collectionName", name);
                                 contents.put("documentName", key);
-                                contents.put("data", EncryptorUtils.getBytes(document.toString()));
+                                contents.put("data", WebUtils.getBytes(document.toString()));
                                 JSONTokener jsonTokener = new JSONTokener(HTTPPostUtils.sendPostRequest(url.toString(), contents));
                                 JSONObject jsonObject = new JSONObject(jsonTokener);
                                 if (!jsonObject.getJSONObject("data").getBoolean("success")) throw new FailedToReplaceDocumentException(jsonObject.getJSONObject("data").getString("reason"));
@@ -291,7 +313,7 @@ public class TitaniumDB {
                                 contents.put("databaseName", dbName);
                                 contents.put("collectionName", name);
                                 contents.put("documentName", key);
-                                contents.put("data", EncryptorUtils.getBytes(document.toString()));
+                                contents.put("data", WebUtils.getBytes(document.toString()));
                                 JSONTokener jsonTokener = new JSONTokener(HTTPPostUtils.sendPostRequest(url.toString(), contents));
                                 JSONObject jsonObject = new JSONObject(jsonTokener);
                                 if (!jsonObject.getJSONObject("data").getBoolean("success")) throw new FailedToReplaceDocumentException(jsonObject.getJSONObject("data").getString("reason"));
@@ -409,7 +431,7 @@ public class TitaniumDB {
                                 contents.put("databaseName", dbName);
                                 contents.put("collectionName", name);
                                 contents.put("documentName", key);
-                                contents.put("data", EncryptorUtils.getBytes(document.toString()));
+                                contents.put("data", WebUtils.getBytes(document.toString()));
                                 JSONTokener jsonTokener = new JSONTokener(HTTPPostUtils.sendPostRequest(url.toString(), contents));
                                 JSONObject jsonObject = new JSONObject(jsonTokener);
                                 if (!jsonObject.getJSONObject("data").getBoolean("success")) throw new FailedToCreateDocumentException(jsonObject.getJSONObject("data").getString("reason"));
@@ -446,7 +468,7 @@ public class TitaniumDB {
                                 contents.put("databaseName", dbName);
                                 contents.put("collectionName", name);
                                 contents.put("documentName", key);
-                                contents.put("data", EncryptorUtils.getBytes(document.toString()));
+                                contents.put("data", WebUtils.getBytes(document.toString()));
                                 JSONTokener jsonTokener = new JSONTokener(HTTPPostUtils.sendPostRequest(url.toString(), contents));
                                 JSONObject jsonObject = new JSONObject(jsonTokener);
                                 if (!jsonObject.getJSONObject("data").getBoolean("success")) throw new FailedToReplaceDocumentException(jsonObject.getJSONObject("data").getString("reason"));
@@ -506,7 +528,7 @@ public class TitaniumDB {
                                 contents.put("databaseName", dbName);
                                 contents.put("collectionName", name);
                                 contents.put("documentName", key);
-                                contents.put("data", EncryptorUtils.getBytes(document.toString()));
+                                contents.put("data", WebUtils.getBytes(document.toString()));
                                 JSONTokener jsonTokener = new JSONTokener(HTTPPostUtils.sendPostRequest(url.toString(), contents));
                                 JSONObject jsonObject = new JSONObject(jsonTokener);
                                 if (!jsonObject.getJSONObject("data").getBoolean("success")) throw new FailedToReplaceDocumentException(jsonObject.getJSONObject("data").getString("reason"));
@@ -648,4 +670,5 @@ public class TitaniumDB {
             throw new FailedToCreateDatabaseException(exception.getMessage());
         }
     }
+
 }

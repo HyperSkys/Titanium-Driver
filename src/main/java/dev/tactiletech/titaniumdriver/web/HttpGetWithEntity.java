@@ -1,4 +1,4 @@
-package dev.tactiletech.titaniumdriver.utils;
+package dev.tactiletech.titaniumdriver.web;
 
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 
@@ -10,4 +10,5 @@ public class HttpGetWithEntity extends HttpEntityEnclosingRequestBase {
     public String getMethod() {
         return METHOD_NAME;
     }
+
 }
