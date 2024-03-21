@@ -55,7 +55,11 @@ public class TitaniumDB {
     }
 
     public JsonObject convertJSONtoGson(JSONObject jsonObject) {
-        return new JsonParser().parse(jsonObject.toString()).getAsJsonObject();
+        return JsonParser.parseString(jsonObject.toString()).getAsJsonObject();
+    }
+
+    public JSONObject convertGsonToJSON(JsonObject jsonObject) {
+        return new JSONObject(jsonObject.toString());
     }
 
     private void connect() {
